@@ -172,35 +172,40 @@ def exportar():
         print('Dados exportados com sucesso!')
 
 
-def importar(arquivo_csv):
-    with open(arquivo_csv, mode='r', encoding='utf-8') as arquivo:
+def importar(nome_arquivo_csv):
+    caminho_arquivo = diretorioInfos / nome_arquivo_csv
+    if not caminho_arquivo.exists():
+        print(f"Erro: O arquivo {caminho_arquivo} não foi encontrado.")
+        return
+
+    with open(caminho_arquivo, mode='r', encoding='utf-8') as arquivo:
         leitor = csv.reader(arquivo)
         next(leitor)  # Ignora o cabeçalho
 
         for linha in leitor:
-            cursor.execute('''INSERT INTO livros (titulos, autor, ano_publicacao, preco) VALUES (?, ?, ?, ?)''',
+            cursor.execute('''INSERT INTO livros (titulo, autor, ano_publicacao, preco) VALUES (?, ?, ?, ?)''',
                            (linha[1], linha[2], int(linha[3]), float(linha[4])))
 
     conexao.commit()
-
     print("Dados importados com sucesso")
 
 
+
 def backup_livros():
-    data = datetime.now().strftime('%Y-%M-%D-%H-%M-%S')
+    data = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
     backup = f"backup_livraria_{data}.db"
     shutil.copy(dbPath, diretorioBackup / backup)
 
     print(f'Backup criado com sucesso: {backup}')
 
 
-def limpar_backcups():
+def limpar_backups():
 
-    backups = sorted(diretorioBackup.glob('* db'), key=os.path.getmtime, reverse=True)
+    backups = sorted(diretorioBackup.glob('*.db'), key=os.path.getmtime, reverse=True)
 
     if len(backups) > 5:
         for backup in backups[5:]:
-            backups.unlink()
+            backup.unlink()
             print(f'backup {backup.name} foi excluido')
 
 
@@ -220,28 +225,28 @@ def menu():
         opcao = input("Escolha uma opção: ")
 
         if opcao == '1':
-            titulo = input("Título: ")
-            autor = input("Autor: ")
+            titulo = input("Título: ").lower()
+            autor = input("Autor: ").lower()
             ano_publicacao = int(input("Ano de Publicação: "))
             preco = float(input("Preço: "))
             adicionar_livro(titulo, autor, ano_publicacao, preco)
             backup_livros()
-            limpar_backcups()
+            limpar_backups()
         elif opcao == '2':
             exibir_livros()
         elif opcao == '3':
-            titulo = input("Título do livro a ser atualizado: ")
+            titulo = input("Título do livro a ser atualizado: ").lower()
             novoPreco = float(input("Novo preço: "))
             atualizar_preco(titulo, novoPreco)
             backup_livros()
-            limpar_backcups()
+            limpar_backups()
         elif opcao == '4':
-            titulo = input("Título do livro a ser removido: ")
+            titulo = input("Título do livro a ser removido: ").lower()
             remover_livro(titulo)
             backup_livros()
-            limpar_backcups()
+            limpar_backups()
         elif opcao == '5':
-            autor = input("Autor: ")
+            autor = input("Autor: ").lower()
             buscar_livros_por_autor(autor)
         elif opcao == '6':
             exportar()
